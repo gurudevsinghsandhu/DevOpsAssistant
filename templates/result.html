@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Resource Estimation Result</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-image: url("/static/bg.jpg");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    }
+    .backdrop {
+      background-color: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(8px);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center">
+
+  <div class="backdrop shadow-2xl rounded-2xl p-10 w-full max-w-2xl">
+    <h2 class="text-2xl font-bold text-gray-800 mb-4">📊 AI Recommendation</h2>
+    <p class="text-gray-700 mb-6"><strong>Your input:</strong> {{ user_input }}</p>
+
+    <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-gray-800 whitespace-pre-line">
+      {{ result }}
+    </div>
+
+    <div class="mt-8 text-center">
+      <a href="/" class="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-2 px-6 rounded-lg hover:opacity-90 transition">🔁 Estimate Again</a>
+    </div>
+  </div>
+
+</body>
+</html>
