@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📊 AI Resource Estimation Result</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: "Segoe UI", sans-serif;
+      background: url('/static/images/galaxy-bg.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+    }
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 20, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 0;
+    }
+    .result-box {
+      position: relative;
+      z-index: 1;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 800px;
+      width: 90%;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+      animation: fadeIn 1.5s ease forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    h1 {
+      text-align: center;
+      color: #00eaff;
+      margin-bottom: 20px;
+      text-shadow: 0 0 12px rgba(0, 234, 255, 0.6);
+    }
+    .ai-output {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 20px;
+      border-radius: 12px;
+      white-space: pre-wrap;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: inset 0 0 10px rgba(0, 234, 255, 0.2);
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    .back-btn {
+      display: block;
+      margin: 30px auto 0;
+      padding: 12px 20px;
+      background: linear-gradient(90deg, #00c6ff, #0072ff);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 12px rgba(0, 234, 255, 0.4);
+    }
+    .back-btn:hover {
+      transform: scale(1.03);
+      box-shadow: 0 0 18px rgba(0, 234, 255, 0.6);
+    }
+  </style>
+</head>
+<body>
+  <div class="result-box">
+    <h1>📊 AI Resource Estimation Result</h1>
+    <div class="ai-output">{{ ai_result }}</div>
+    <button class="back-btn" onclick="window.location.href='/'">⬅️ Back</button>
+  </div>
+</body>
+</html>
