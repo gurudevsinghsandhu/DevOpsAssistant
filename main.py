@@ -1,27 +1,53 @@
 import os
-from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Form, Request, Depends
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
 from openai import OpenAI
+from passlib.hash import bcrypt
+from models import Base, User, ChatHistory
+from database import engine, SessionLocal
+from models import Base, User
+from sqlalchemy.orm import Session
+from database import Base
+from starlette.middleware.sessions import SessionMiddleware
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# Initialize DB
+Base.metadata.create_all(bind=engine)
 
 # Load env variables
 load_dotenv()
 
+# OpenAI setup
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# FastAPI app
 app = FastAPI()
 
 # Static & Templates setup
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# Load your system prompt
+
+# ------------------------------
+# 🔹 Utility Functions
+# ------------------------------
 def load_prompt():
+    """Load the system prompt for resource estimation"""
     with open("prompts/resource_estimation.txt", "r") as f:
         return f.read()
 
+
 def estimate_resources(user_input: str):
+    """Send app description to OpenAI and get resource estimation"""
     system_prompt = load_prompt()
     response = client.chat.completions.create(
         model="gpt-4o-mini",
@@ -33,6 +59,10 @@ def estimate_resources(user_input: str):
     )
     return response.choices[0].message.content
 
+
+# ------------------------------
+# 🌌 Routes
+# ------------------------------
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
@@ -47,3 +77,100 @@ async def estimate(request: Request, app_description: str = Form(...)):
         "ai_result": ai_result,
         "user_input": app_description
     })
+
+
+# ------------------------------
+# 👤 Authentication Routes
+# ------------------------------
+
+@app.get("/signin", response_class=HTMLResponse)
+async def signin_page(request: Request):
+    return templates.TemplateResponse("signin.html", {"request": request})
+
+
+@app.get("/signup", response_class=HTMLResponse)
+async def signup_page(request: Request):
+    return templates.TemplateResponse("signup.html", {"request": request})
+
+
+@app.post("/signup", response_class=HTMLResponse)
+async def signup(
+    request: Request,
+    name: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...)
+):
+    db = SessionLocal()
+    existing_user = db.query(User).filter(User.email == email).first()
+    if existing_user:
+        return templates.TemplateResponse(
+            "signup.html", {"request": request, "error": "⚠️ User already exists!"}
+        )
+
+    hashed_pw = bcrypt.hash(password)
+    new_user = User(name=name, email=email, password=hashed_pw)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    db.close()
+
+    return RedirectResponse(url="/signin", status_code=303)
+
+
+
+# Make sure this is added once in your main.py
+app.add_middleware(SessionMiddleware, secret_key="63f4945d921d599f27ae4fdf5bada3f1")
+
+@app.post("/signin", response_class=HTMLResponse)
+async def signin(
+    request: Request,
+    email: str = Form(...),
+    password: str = Form(...)
+):
+    db = SessionLocal()
+    user = db.query(User).filter(User.email == email).first()
+
+    # ❌ Invalid user or password
+    if not user or not bcrypt.verify(password, user.password):
+        db.close()
+        return templates.TemplateResponse(
+            "signin.html", {"request": request, "error": "❌ Invalid email or password."}
+        )
+
+    # ✅ Store session info
+    request.session["user_id"] = user.id
+
+    db.close()
+
+    # ✅ Redirect to dashboard
+    return RedirectResponse(url=f"/dashboard/{user.id}", status_code=303)
+
+
+@app.get("/dashboard/{user_id}", response_class=HTMLResponse)
+async def dashboard(request: Request, user_id: int):
+    db = SessionLocal()
+    user = db.query(User).filter(User.id == user_id).first()
+    db.close()
+
+    if not user:
+        return RedirectResponse(url="/signin", status_code=303)
+
+    return templates.TemplateResponse(
+        "dashboard.html",
+        {"request": request, "user": user}
+    )
+
+
+@app.post("/chat", response_class=HTMLResponse)
+async def chat(request: Request, user_id: int = Form(...), query: str = Form(...), db: Session = Depends(get_db)):
+    ai_response = estimate_resources(query)
+    chat = ChatHistory(user_id=user_id, query=query, response=ai_response)
+    db.add(chat)
+    db.commit()
+    chats = db.query(ChatHistory).filter(ChatHistory.user_id == user_id).order_by(ChatHistory.created_at.desc()).all()
+    return templates.TemplateResponse("dashboard.html", {"request": request, "chats": chats, "user_id": user_id})
+
+@app.get("/logout")
+async def logout(request: Request):
+    request.session.clear()   # ✅ clears the current session
+    return RedirectResponse(url="/", status_code=303)

@@ -16,7 +16,9 @@
       background-size: cover;
       color: #fff;
       overflow: hidden;
+      position: relative;
     }
+
     body::before {
       content: "";
       position: absolute;
@@ -26,72 +28,156 @@
       backdrop-filter: blur(4px);
       z-index: 0;
     }
+
+    /* Header Buttons */
+    .top-buttons {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      display: flex;
+      gap: 15px;
+      z-index: 2;
+    }
+
+    .top-buttons a {
+      text-decoration: none;
+      color: white;
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: 1px solid rgba(0, 234, 255, 0.6);
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 0 10px rgba(0, 234, 255, 0.4);
+      transition: all 0.3s ease;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      font-size: 15px;
+    }
+
+    .top-buttons a:hover {
+      background: linear-gradient(90deg, #00c6ff, #0072ff);
+      transform: scale(1.05);
+      box-shadow: 0 0 18px rgba(0, 234, 255, 0.8);
+    }
+
+    /* Main Box */
     .box {
       position: relative;
       z-index: 1;
       background: rgba(255, 255, 255, 0.12);
       border: 1px solid rgba(255, 255, 255, 0.25);
-      border-radius: 16px;
-      padding: 40px;
+      border-radius: 18px;
+      padding: 40px 50px;
       width: 90%;
-      max-width: 700px;
+      max-width: 600px;
       text-align: center;
       backdrop-filter: blur(10px);
       box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
       animation: fadeIn 1.5s ease forwards;
     }
+
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(40px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
     h1 {
-      font-size: 30px;
+      font-size: 28px;
       color: #00eaff;
       text-shadow: 0 0 12px rgba(0, 234, 255, 0.6);
-      margin-bottom: 20px;
+      margin-bottom: 25px;
     }
+
+    /* Centered Textarea Container */
+    .textarea-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+    }
+
     textarea {
       width: 100%;
       height: 130px;
-      padding: 15px;
+      padding: 15px 60px 15px 15px;
       border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.3);
       background: rgba(0, 0, 0, 0.3);
       color: #fff;
       font-size: 16px;
       resize: none;
+      line-height: 1.6;
     }
+
     textarea:focus {
       outline: none;
       border-color: #00eaff;
       box-shadow: 0 0 10px #00eaff;
     }
-    button {
-      margin-top: 20px;
-      padding: 14px;
-      width: 100%;
+
+    /* Floating Button inside textarea */
+    .send-btn {
+      position: absolute;
+      bottom: 18px;
+      right: 18px;
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
       background: linear-gradient(90deg, #00c6ff, #0072ff);
-      border: none;
-      border-radius: 10px;
       color: white;
-      font-size: 18px;
+      border: none;
+      font-size: 22px;
       cursor: pointer;
-      box-shadow: 0 0 12px rgba(0, 234, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 14px rgba(0, 234, 255, 0.4);
       transition: all 0.3s ease;
     }
-    button:hover {
-      transform: scale(1.03);
-      box-shadow: 0 0 18px rgba(0, 234, 255, 0.6);
+
+    .send-btn:hover {
+      transform: scale(1.15);
+      box-shadow: 0 0 24px rgba(0, 234, 255, 0.8);
+    }
+
+    @media (max-width: 600px) {
+      .box {
+        padding: 25px 30px;
+        max-width: 90%;
+      }
+      h1 {
+        font-size: 22px;
+      }
+      textarea {
+        height: 110px;
+      }
+      .send-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+      }
     }
   </style>
 </head>
 <body>
+
+  <!-- Top Buttons -->
+  <div class="top-buttons">
+    <a href="/signin">Sign In</a>
+    <a href="/signup">Sign Up</a>
+  </div>
+
+  <!-- Main Box -->
   <div class="box">
-    <h1>DevOps AI Resource Estimator</h1>
+    <h1>Cloud Resource Estimator</h1>
     <form method="POST" action="/estimate">
-      <textarea name="app_description" placeholder="e.g. A Django app with 10k users and PostgreSQL DB..."></textarea>
-      <button type="submit">Estimate Resources</button>
+      <div class="textarea-wrapper">
+        <textarea name="app_description" placeholder="Ask anything"></textarea>
+        <button type="submit" class="send-btn" title="Estimate Resources">↑</button>
+      </div>
     </form>
   </div>
+
 </body>
 </html>
