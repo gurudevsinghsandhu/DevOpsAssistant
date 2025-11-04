@@ -6,12 +6,15 @@ from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
 from openai import OpenAI
 from passlib.hash import bcrypt
-from models import Base, User, ChatHistory
+from models import Base, User
 from database import engine, SessionLocal
 from models import Base, User
 from sqlalchemy.orm import Session
 from database import Base
 from starlette.middleware.sessions import SessionMiddleware
+from fastapi.responses import JSONResponse
+from models import ChatHistory
+
 
 def get_db():
     db = SessionLocal()
@@ -149,27 +152,67 @@ async def signin(
 @app.get("/dashboard/{user_id}", response_class=HTMLResponse)
 async def dashboard(request: Request, user_id: int):
     db = SessionLocal()
-    user = db.query(User).filter(User.id == user_id).first()
-    db.close()
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return RedirectResponse(url="/signin", status_code=303)
 
-    if not user:
-        return RedirectResponse(url="/signin", status_code=303)
+        # ✅ Fetch chat history for this user
+        chats = (
+            db.query(ChatHistory)
+            .filter(ChatHistory.user_id == user.id)
+            .order_by(ChatHistory.id.desc())
+            .all()
+        )
 
-    return templates.TemplateResponse(
-        "dashboard.html",
-        {"request": request, "user": user}
-    )
+        return templates.TemplateResponse(
+            "dashboard.html",
+            {
+                "request": request,
+                "username": user.name,
+                "user_id": user.id,
+                "history": chats,  # ✅ Pass real chat history to template
+            }
+        )
+    finally:
+        db.close()
 
 
-@app.post("/chat", response_class=HTMLResponse)
-async def chat(request: Request, user_id: int = Form(...), query: str = Form(...), db: Session = Depends(get_db)):
+@app.post("/chat")
+async def chat(request: Request, db: Session = Depends(get_db)):
+    data = await request.json()
+    query = data.get("query")
+
+    if not query:
+        return JSONResponse({"error": "Query required"}, status_code=400)
+
     ai_response = estimate_resources(query)
-    chat = ChatHistory(user_id=user_id, query=query, response=ai_response)
+
+    # Save chat (temporary: hardcoded user_id=1)
+    chat = ChatHistory(user_id=1, query=query, response=ai_response)
     db.add(chat)
     db.commit()
-    chats = db.query(ChatHistory).filter(ChatHistory.user_id == user_id).order_by(ChatHistory.created_at.desc()).all()
-    return templates.TemplateResponse("dashboard.html", {"request": request, "chats": chats, "user_id": user_id})
+    db.refresh(chat)
 
+    return {"response": ai_response}
+
+@app.get("/chat-history/{user_id}")
+def get_chat_history(user_id: int, db: Session = Depends(get_db)):
+    chats = (
+        db.query(ChatHistory)
+        .filter(ChatHistory.user_id == user_id)
+        .order_by(ChatHistory.id.desc())
+        .all()
+    )
+    return [
+        {
+            "id": c.id,
+            "query": c.query,
+            "response": c.response,
+            "created_at": c.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        for c in chats
+    ]
 @app.get("/logout")
 async def logout(request: Request):
     request.session.clear()   # ✅ clears the current session

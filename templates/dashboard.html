@@ -27,7 +27,6 @@
       z-index: 0;
     }
 
-    /* Sidebar */
     .sidebar {
       width: 300px;
       background: rgba(255, 255, 255, 0.1);
@@ -52,14 +51,14 @@
       background: rgba(255, 255, 255, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.2);
       cursor: pointer;
-      transition: background 0.3s;
+      transition: all 0.3s ease;
     }
 
     .chat-item:hover {
       background: rgba(0, 234, 255, 0.2);
+      transform: scale(1.03);
     }
 
-    /* Main content */
     .main {
       flex: 1;
       display: flex;
@@ -96,22 +95,23 @@
       box-shadow: 0 0 15px rgba(0, 234, 255, 0.7);
     }
 
-    /* Chat area */
     .chat-area {
       flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
+      height: calc(100vh - 120px);
     }
 
     .chat-box {
-      height: 70%;
+      flex: 1;
       overflow-y: auto;
       padding: 15px;
       border-radius: 10px;
       border: 1px solid rgba(255, 255, 255, 0.2);
       background: rgba(255, 255, 255, 0.1);
-      margin-bottom: 20px;
+      margin-bottom: 0;
+      display: flex;
+      flex-direction: column;
     }
 
     .message {
@@ -119,6 +119,7 @@
       padding: 10px;
       border-radius: 8px;
       max-width: 80%;
+      word-wrap: break-word;
     }
 
     .user {
@@ -131,8 +132,17 @@
       align-self: flex-start;
     }
 
+    #chat-form {
+      position: sticky;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.0);
+      backdrop-filter: blur(6px);
+      padding: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.0);
+    }
+
     textarea {
-      width: 100%;
+      width: 98.5%;
       height: 100px;
       padding: 12px;
       border-radius: 10px;
@@ -165,11 +175,11 @@
 </head>
 <body>
 
-  <div class="sidebar">
+  <div class="sidebar" id="sidebar">
     <h2>Chat History</h2>
     {% if history %}
       {% for chat in history %}
-        <div class="chat-item">{{ chat.query[:40] }}...</div>
+        <div class="chat-item" data-id="{{ chat.id }}">{{ chat.query[:40] }}...</div>
       {% endfor %}
     {% else %}
       <p>No previous chats.</p>
@@ -178,7 +188,7 @@
 
   <div class="main">
     <div class="top-bar">
-      <h1>Welcome, {{username }} </h1>
+      <h1>Welcome, {{ username }}</h1>
       <a href="/logout">Logout</a>
     </div>
 
@@ -191,12 +201,108 @@
         {% endif %}
       </div>
 
-      <form method="POST" action="/chat">
-        <textarea name="message" placeholder="Describe your app or ask DevOps AI..."></textarea>
+      <form id="chat-form">
+        <textarea name="query" id="query" placeholder="Describe your app or ask DevOps AI..."></textarea>
         <button type="submit">Send</button>
       </form>
     </div>
   </div>
+  
+  <script>
+    const form = document.getElementById('chat-form');
+    const chatBox = document.getElementById('chat-box');
+    const textarea = document.getElementById('query');
+    const sidebar = document.getElementById('sidebar');
+    const userId = {{ user_id }};
 
+    // ✅ Fetch updated chat history
+    async function loadChatHistory() {
+      try {
+        const res = await fetch(`/chat-history/${userId}`);
+        const data = await res.json();
+
+        sidebar.innerHTML = "<h2>Chat History</h2>";
+
+        if (!Array.isArray(data) || data.length === 0) {
+          sidebar.innerHTML += "<p>No previous chats.</p>";
+          return;
+        }
+
+        data.forEach(chat => {
+          const item = document.createElement('div');
+          item.className = 'chat-item';
+          item.textContent = chat.query.slice(0, 40) + '...';
+          item.onclick = () => loadChat(chat);
+          sidebar.appendChild(item);
+        });
+      } catch (err) {
+        console.error("Error loading chat history:", err);
+        sidebar.innerHTML += "<p>Error loading chats.</p>";
+      }
+    }
+
+    // ✅ Load selected chat into main chat box
+    function loadChat(chat) {
+      chatBox.innerHTML = '';
+
+      const userMsg = document.createElement('div');
+      userMsg.className = 'message user';
+      userMsg.textContent = chat.query;
+
+      const aiMsg = document.createElement('div');
+      aiMsg.className = 'message ai';
+      aiMsg.textContent = chat.response;
+
+      chatBox.appendChild(userMsg);
+      chatBox.appendChild(aiMsg);
+    }
+
+    // ✅ Handle sending new messages
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const query = textarea.value.trim();
+      if (!query) return;
+
+      const userMsg = document.createElement('div');
+      userMsg.className = 'message user';
+      userMsg.textContent = query;
+      chatBox.appendChild(userMsg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      textarea.value = '';
+
+      try {
+        const res = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        });
+
+        const data = await res.json();
+
+        const aiMsg = document.createElement('div');
+        aiMsg.className = 'message ai';
+        aiMsg.textContent = data.response || 'No response received.';
+        chatBox.appendChild(aiMsg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // ✅ Refresh sidebar
+        await loadChatHistory();
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    // ✅ Allow Enter to send (Shift+Enter = newline)
+    textarea.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+    // ✅ Initial load
+    window.addEventListener('DOMContentLoaded', loadChatHistory);
+  </script>
 </body>
 </html>

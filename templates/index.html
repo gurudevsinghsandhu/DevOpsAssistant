@@ -17,6 +17,7 @@
       color: #fff;
       overflow: hidden;
       position: relative;
+      flex-direction: column;
     }
 
     body::before {
@@ -74,6 +75,7 @@
       backdrop-filter: blur(10px);
       box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
       animation: fadeIn 1.5s ease forwards;
+      margin-bottom: 60px; /* space for footer */
     }
 
     @keyframes fadeIn {
@@ -88,7 +90,7 @@
       margin-bottom: 25px;
     }
 
-    /* Centered Textarea Container */
+    /* Textarea Section */
     .textarea-wrapper {
       position: relative;
       display: flex;
@@ -116,7 +118,7 @@
       box-shadow: 0 0 10px #00eaff;
     }
 
-    /* Floating Button inside textarea */
+    /* Floating Button */
     .send-btn {
       position: absolute;
       bottom: 18px;
@@ -141,6 +143,24 @@
       box-shadow: 0 0 24px rgba(0, 234, 255, 0.8);
     }
 
+    /* Footer */
+    footer {
+      position: absolute;
+      bottom: 15px;
+      width: 100%;
+      text-align: center;
+      font-size: 14px;
+      color: #cfefff;
+      z-index: 2;
+      text-shadow: 0 0 6px rgba(0, 234, 255, 0.4);
+      letter-spacing: 0.3px;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 8px 0;
+      border-top: 1px solid rgba(0, 234, 255, 0.2);
+      backdrop-filter: blur(3px);
+    }
+ 
+
     @media (max-width: 600px) {
       .box {
         padding: 25px 30px;
@@ -156,6 +176,10 @@
         width: 40px;
         height: 40px;
         font-size: 20px;
+      }
+      footer {
+        font-size: 12px;
+        padding: 10px;
       }
     }
   </style>
@@ -178,6 +202,12 @@
       </div>
     </form>
   </div>
+
+  <!-- Footer -->
+  <footer>
+    Copyright © 2025 Cloud Resources Assistance by 
+    <strong>Gurudev Singh</strong> and <strong>Akshat Mehra</strong> - All Rights Reserved
+  </footer>
 
 </body>
 </html>
